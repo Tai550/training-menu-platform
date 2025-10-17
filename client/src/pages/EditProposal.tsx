@@ -102,9 +102,20 @@ export default function EditProposal() {
       return;
     }
 
-    const validProgram = program.filter(day => 
-      day.exercises.some(ex => ex.name.trim())
-    );
+    const validProgram = program
+      .filter(day => day.exercises.some(ex => ex.name.trim()))
+      .map(day => ({
+        day: typeof day.day === 'string' ? parseInt(day.day) || 1 : day.day,
+        exercises: day.exercises
+          .filter(ex => ex.name.trim())
+          .map(ex => ({
+            name: ex.name,
+            sets: typeof ex.sets === 'string' ? parseInt(ex.sets) || undefined : ex.sets,
+            reps: ex.reps,
+            duration: ex.duration,
+            notes: ex.notes,
+          }))
+      }));
 
     if (validProgram.length === 0) {
       toast.error("少なくとも1つのエクササイズを追加してください");
