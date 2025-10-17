@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `isApprovedTrainer` boolean DEFAULT false NOT NULL;

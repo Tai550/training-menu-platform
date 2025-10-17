@@ -12,6 +12,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   userType: mysqlEnum("userType", ["customer", "trainer"]).default("customer").notNull(),
+  isApprovedTrainer: boolean("isApprovedTrainer").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow(),
 });
@@ -25,9 +26,11 @@ export type InsertUser = typeof users.$inferInsert;
 export const trainerProfiles = mysqlTable("trainerProfiles", {
   id: varchar("id", { length: 64 }).primaryKey(),
   userId: varchar("userId", { length: 64 }).notNull(),
+  profilePhoto: text("profilePhoto"), // S3 URL for profile photo
   bio: text("bio"),
   specialties: text("specialties"), // JSON array of specialties
   certifications: text("certifications"), // JSON array of certification info
+  socialLinks: text("socialLinks"), // JSON object of social media links
   isVerified: boolean("isVerified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),

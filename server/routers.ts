@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as db from "./db";
+import { storagePut } from "./storage";
 
 export const appRouter = router({
   system: systemRouter,
@@ -111,6 +112,11 @@ export const appRouter = router({
         frequency: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Check if user is an approved trainer
+        if (!ctx.user.isApprovedTrainer) {
+          throw new Error("トレーナーとして承認されているユーザーのみ提案できます。プロフィールを登録して承認を待ってください。");
+        }
+        
         const id = nanoid();
         await db.createProposal({
           id,
@@ -127,6 +133,52 @@ export const appRouter = router({
       }),
   }),
   
+  // Storage router
+  storage: router({    uploadProfilePhoto: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileData: z.string(), // base64 encoded
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const buffer = Buffer.from(input.fileData, 'base64');
+        const filename = `trainer-photos/${ctx.user.id}-${Date.now()}.${input.fileName.split('.').pop()}`;
+        const result = await storagePut(filename, buffer, input.mimeType);
+        return result;
+      }),
+  }),
+  
+  // Admin router
+  admin: router({
+    getAllUsers: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        return await db.getAllUsers();
+      }),
+    
+    approveTrainer: protectedProcedure
+      .input(z.object({ userId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        await db.updateUser(input.userId, { isApprovedTrainer: true });
+        return { success: true };
+      }),
+    
+    revokeTrainer: protectedProcedure
+      .input(z.object({ userId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        await db.updateUser(input.userId, { isApprovedTrainer: false });
+        return { success: true };
+      }),
+  }),
+  
   // Trainer Profile router
   trainer: router({
     getProfile: publicProcedure
@@ -137,6 +189,7 @@ export const appRouter = router({
     
     createOrUpdateProfile: protectedProcedure
       .input(z.object({
+        profilePhoto: z.string().optional(),
         bio: z.string().optional(),
         specialties: z.array(z.string()).optional(),
         certifications: z.array(z.object({
@@ -144,15 +197,24 @@ export const appRouter = router({
           issuer: z.string(),
           year: z.string(),
         })).optional(),
+        socialLinks: z.object({
+          twitter: z.string().optional(),
+          instagram: z.string().optional(),
+          facebook: z.string().optional(),
+          youtube: z.string().optional(),
+          website: z.string().optional(),
+        }).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const existing = await db.getTrainerProfileByUserId(ctx.user.id);
         
         if (existing) {
           await db.updateTrainerProfile(existing.id, {
+            profilePhoto: input.profilePhoto,
             bio: input.bio,
             specialties: input.specialties ? JSON.stringify(input.specialties) : undefined,
             certifications: input.certifications ? JSON.stringify(input.certifications) : undefined,
+            socialLinks: input.socialLinks ? JSON.stringify(input.socialLinks) : undefined,
           });
           return { id: existing.id };
         } else {
@@ -160,9 +222,11 @@ export const appRouter = router({
           await db.createTrainerProfile({
             id,
             userId: ctx.user.id,
+            profilePhoto: input.profilePhoto,
             bio: input.bio,
             specialties: input.specialties ? JSON.stringify(input.specialties) : null,
             certifications: input.certifications ? JSON.stringify(input.certifications) : null,
+            socialLinks: input.socialLinks ? JSON.stringify(input.socialLinks) : null,
             isVerified: false,
           });
           return { id };

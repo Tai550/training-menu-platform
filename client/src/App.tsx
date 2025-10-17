@@ -10,6 +10,7 @@ import ConsultationDetail from "./pages/ConsultationDetail";
 import CreateConsultation from "./pages/CreateConsultation";
 import CreateProposal from "./pages/CreateProposal";
 import TrainerProfile from "./pages/TrainerProfile";
+import Admin from "./pages/Admin";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/create-consultation" component={CreateConsultation} />
       <Route path="/create-proposal/:consultationId" component={CreateProposal} />
       <Route path="/trainer-profile" component={TrainerProfile} />
+      <Route path="/admin" component={Admin} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, Upload, Twitter, Instagram, Facebook, Youtube, Globe } from "lucide-react";
+
 
 interface Certification {
   name: string;
@@ -17,24 +18,37 @@ interface Certification {
   year: string;
 }
 
+interface SocialLinks {
+  twitter?: string;
+  instagram?: string;
+  facebook?: string;
+  youtube?: string;
+  website?: string;
+}
+
 export default function TrainerProfile() {
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: profile, isLoading } = trpc.trainer.getProfile.useQuery(
     { userId: user?.id || "" },
     { enabled: !!user?.id }
   );
   
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [bio, setBio] = useState("");
   const [specialtyInput, setSpecialtyInput] = useState("");
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([
     { name: "", issuer: "", year: "" }
   ]);
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
 
   useEffect(() => {
     if (profile) {
+      setProfilePhoto(profile.profilePhoto || "");
       setBio(profile.bio || "");
       setSpecialties(profile.specialties ? JSON.parse(profile.specialties) : []);
       setCertifications(
@@ -42,6 +56,7 @@ export default function TrainerProfile() {
           ? JSON.parse(profile.certifications)
           : [{ name: "", issuer: "", year: "" }]
       );
+      setSocialLinks(profile.socialLinks ? JSON.parse(profile.socialLinks) : {});
     }
   }, [profile]);
 
@@ -54,6 +69,51 @@ export default function TrainerProfile() {
       toast.error("エラーが発生しました: " + error.message);
     },
   });
+
+  const uploadMutation = trpc.storage.uploadProfilePhoto.useMutation({
+    onSuccess: (data) => {
+      setProfilePhoto(data.url);
+      toast.success("写真をアップロードしました");
+      setUploadingPhoto(false);
+    },
+    onError: (error) => {
+      toast.error("アップロードに失敗しました: " + error.message);
+      setUploadingPhoto(false);
+    },
+  });
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("画像ファイルを選択してください");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("ファイルサイズは5MB以下にしてください");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        uploadMutation.mutate({
+          fileName: file.name,
+          fileData: base64,
+          mimeType: file.type,
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("アップロードに失敗しました");
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleAddSpecialty = () => {
     if (specialtyInput.trim() && !specialties.includes(specialtyInput.trim())) {
@@ -80,6 +140,10 @@ export default function TrainerProfile() {
     setCertifications(newCertifications);
   };
 
+  const handleUpdateSocialLink = (platform: keyof SocialLinks, value: string) => {
+    setSocialLinks({ ...socialLinks, [platform]: value });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -87,10 +151,16 @@ export default function TrainerProfile() {
       cert.name.trim() && cert.issuer.trim() && cert.year.trim()
     );
 
+    const validSocialLinks = Object.fromEntries(
+      Object.entries(socialLinks).filter(([_, value]) => value && value.trim())
+    );
+
     saveMutation.mutate({
+      profilePhoto: profilePhoto.trim() || undefined,
       bio: bio.trim() || undefined,
       specialties: specialties.length > 0 ? specialties : undefined,
       certifications: validCertifications.length > 0 ? validCertifications : undefined,
+      socialLinks: Object.keys(validSocialLinks).length > 0 ? validSocialLinks as SocialLinks : undefined,
     });
   };
 
@@ -147,6 +217,54 @@ export default function TrainerProfile() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Profile Photo */}
+                <div>
+                  <Label>プロフィール写真</Label>
+                  <div className="mt-2 flex items-center gap-4">
+                    {profilePhoto ? (
+                      <img
+                        src={profilePhoto}
+                        alt="Profile"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Upload className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                      >
+                        {uploadingPhoto ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            アップロード中...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            写真を選択
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-1">
+                        JPG, PNG, GIF (最大5MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="bio">自己紹介</Label>
                   <Textarea
@@ -196,6 +314,53 @@ export default function TrainerProfile() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Social Links */}
+                <div>
+                  <Label className="text-lg mb-4 block">SNSリンク</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Twitter className="w-5 h-5 text-blue-400" />
+                      <Input
+                        value={socialLinks.twitter || ""}
+                        onChange={(e) => handleUpdateSocialLink('twitter', e.target.value)}
+                        placeholder="https://twitter.com/username"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Instagram className="w-5 h-5 text-pink-500" />
+                      <Input
+                        value={socialLinks.instagram || ""}
+                        onChange={(e) => handleUpdateSocialLink('instagram', e.target.value)}
+                        placeholder="https://instagram.com/username"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Facebook className="w-5 h-5 text-blue-600" />
+                      <Input
+                        value={socialLinks.facebook || ""}
+                        onChange={(e) => handleUpdateSocialLink('facebook', e.target.value)}
+                        placeholder="https://facebook.com/username"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Youtube className="w-5 h-5 text-red-600" />
+                      <Input
+                        value={socialLinks.youtube || ""}
+                        onChange={(e) => handleUpdateSocialLink('youtube', e.target.value)}
+                        placeholder="https://youtube.com/@username"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-5 h-5 text-gray-600" />
+                      <Input
+                        value={socialLinks.website || ""}
+                        onChange={(e) => handleUpdateSocialLink('website', e.target.value)}
+                        placeholder="https://your-website.com"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>

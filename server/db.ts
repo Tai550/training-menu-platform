@@ -85,6 +85,24 @@ export async function getUser(id: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function updateUser(id: string, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set(data).where(eq(users.id, id));
+}
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users);
+}
+
+export async function getPendingTrainers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users).where(eq(users.userType, "trainer"));
+}
+
 // Consultation queries
 export async function createConsultation(data: InsertConsultation) {
   const db = await getDb();

@@ -15,6 +15,20 @@
       "when": 1760660682405,
       "tag": "0001_tense_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1760663283584,
+      "tag": "0002_small_sally_floyd",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1760663325999,
+      "tag": "0003_bitter_ink",
+      "breakpoints": true
     }
   ]
 }
