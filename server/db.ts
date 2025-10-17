@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, consultations, proposals, trainerProfiles, InsertConsultation, InsertProposal, InsertTrainerProfile } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -133,11 +133,34 @@ export async function updateConsultation(id: string, data: Partial<InsertConsult
   await db.update(consultations).set(data).where(eq(consultations.id, id));
 }
 
-// Proposal queries
-export async function createProposal(data: InsertProposal) {
+export async function createProposal(proposal: InsertProposal) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.insert(proposals).values(data);
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  await db.insert(proposals).values(proposal);
+}
+
+export async function getProposalByTrainerAndConsultation(trainerId: string, consultationId: string) {
+  const db = await getDb();
+  if (!db) {
+    return undefined;
+  }
+  const result = await db.select().from(proposals)
+    .where(and(
+      eq(proposals.trainerId, trainerId),
+      eq(proposals.consultationId, consultationId)
+    ))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateProposal(id: string, data: Partial<InsertProposal>) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+  await db.update(proposals).set(data).where(eq(proposals.id, id));
 }
 
 export async function getProposalsByConsultationId(consultationId: string) {
@@ -151,12 +174,6 @@ export async function getProposalById(id: string) {
   if (!db) return undefined;
   const result = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
-}
-
-export async function updateProposal(id: string, data: Partial<InsertProposal>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(proposals).set(data).where(eq(proposals.id, id));
 }
 
 // Trainer Profile queries

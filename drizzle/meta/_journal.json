@@ -29,6 +29,13 @@
       "when": 1760663325999,
       "tag": "0003_bitter_ink",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1760669933255,
+      "tag": "0004_sudden_scarecrow",
+      "breakpoints": true
     }
   ]
 }

@@ -87,6 +87,53 @@ export const appRouter = router({
   
   // Proposal router
   proposal: router({
+    getById: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getProposalById(input.id);
+      }),
+    
+    getByTrainerAndConsultation: protectedProcedure
+      .input(z.object({ consultationId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getProposalByTrainerAndConsultation(ctx.user.id, input.consultationId);
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        title: z.string(),
+        content: z.string(),
+        duration: z.string().optional(),
+        frequency: z.string().optional(),
+        program: z.array(z.object({
+          day: z.number(),
+          exercises: z.array(z.object({
+            name: z.string(),
+            sets: z.number().optional(),
+            reps: z.string().optional(),
+            duration: z.string().optional(),
+            notes: z.string().optional(),
+          })),
+        })).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        
+        // Check if the proposal belongs to the current user
+        const existing = await db.getProposalById(id);
+        if (!existing || existing.trainerId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        await db.updateProposal(id, {
+          ...data,
+          program: data.program ? JSON.stringify(data.program) : undefined,
+        });
+        
+        return { id };
+      }),
+
     listByConsultation: publicProcedure
       .input(z.object({ consultationId: z.string() }))
       .query(async ({ input }) => {
@@ -96,25 +143,30 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         consultationId: z.string(),
-        title: z.string().min(1),
-        content: z.string().min(1),
+        title: z.string(),
+        content: z.string(),
+        duration: z.string().optional(),
+        frequency: z.string().optional(),
         program: z.array(z.object({
-          day: z.string(),
+          day: z.number(),
           exercises: z.array(z.object({
             name: z.string(),
-            sets: z.string().optional(),
+            sets: z.number().optional(),
             reps: z.string().optional(),
             duration: z.string().optional(),
             notes: z.string().optional(),
           })),
-        })),
-        duration: z.string().optional(),
-        frequency: z.string().optional(),
+        })).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Check if user is an approved trainer
         if (!ctx.user.isApprovedTrainer) {
-          throw new Error("トレーナーとして承認されているユーザーのみ提案できます。プロフィールを登録して承認を待ってください。");
+          throw new Error("トレーナーとして承認されていません");
+        }
+        
+        // Check if trainer already has a proposal for this consultation
+        const existing = await db.getProposalByTrainerAndConsultation(ctx.user.id, input.consultationId);
+        if (existing) {
+          throw new Error("この相談にはすでに提案済みです。編集してください。");
         }
         
         const id = nanoid();
@@ -124,11 +176,12 @@ export const appRouter = router({
           trainerId: ctx.user.id,
           title: input.title,
           content: input.content,
-          program: JSON.stringify(input.program),
-          duration: input.duration,
-          frequency: input.frequency,
+          duration: input.duration || null,
+          frequency: input.frequency || null,
+          program: input.program ? JSON.stringify(input.program) : null,
           isBestAnswer: false,
         });
+        
         return { id };
       }),
   }),

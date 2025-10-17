@@ -1,15 +1,17 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Link, useParams } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { Loader2, Award } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ConsultationDetail() {
   const { id } = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
   
@@ -54,33 +56,7 @@ export default function ConsultationDetail() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/">
-            <h1 className="text-2xl font-bold text-primary cursor-pointer">{APP_TITLE}</h1>
-          </Link>
-          <nav className="flex gap-4 items-center">
-            <Link href="/consultations">
-              <Button variant="ghost">相談一覧</Button>
-            </Link>
-            {isAuthenticated ? (
-              <>
-                <Link href="/create-consultation">
-                  <Button variant="outline">相談を投稿</Button>
-                </Link>
-                <Link href="/trainer-profile">
-                  <Button variant="ghost">プロフィール</Button>
-                </Link>
-              </>
-            ) : (
-              <a href={getLoginUrl()}>
-                <Button>ログイン</Button>
-              </a>
-            )}
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 flex-1">
@@ -160,7 +136,7 @@ export default function ConsultationDetail() {
         ) : proposals && proposals.length > 0 ? (
           <div className="space-y-6">
             {proposals.map((proposal) => {
-              const program = JSON.parse(proposal.program);
+              const program = proposal.program ? JSON.parse(proposal.program) : null;
               return (
                 <Card key={proposal.id} className={proposal.isBestAnswer ? "border-2 border-primary" : ""}>
                   <CardHeader>
@@ -174,15 +150,26 @@ export default function ConsultationDetail() {
                           </Badge>
                         )}
                       </CardTitle>
-                      {isOwner && !consultation.bestAnswerId && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleSelectBestAnswer(proposal.id)}
-                          disabled={selectBestAnswer.isPending}
-                        >
-                          ベストアンサーに選ぶ
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {isOwner && !consultation.bestAnswerId && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleSelectBestAnswer(proposal.id)}
+                            disabled={selectBestAnswer.isPending}
+                          >
+                            ベストアンサーに選ぶ
+                          </Button>
+                        )}
+                        {user?.id === proposal.trainerId && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setLocation(`/proposals/${proposal.id}/edit`)}
+                          >
+                            編集
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <CardDescription>
                       {proposal.duration && `期間: ${proposal.duration}`}

@@ -4,37 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { Link } from "wouter";
 import { MessageSquare, Users, TrendingUp, Award } from "lucide-react";
+import Header from "@/components/Header";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">{APP_TITLE}</h1>
-          <nav className="flex gap-4 items-center">
-            <Link href="/consultations">
-              <Button variant="ghost">相談一覧</Button>
-            </Link>
-            {isAuthenticated ? (
-              <>
-                <Link href="/create-consultation">
-                  <Button variant="outline">相談を投稿</Button>
-                </Link>
-                <Link href="/trainer-profile">
-                  <Button variant="ghost">プロフィール</Button>
-                </Link>
-              </>
-            ) : (
-              <a href={getLoginUrl()}>
-                <Button>ログイン</Button>
-              </a>
-            )}
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">

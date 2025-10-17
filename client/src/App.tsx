@@ -9,6 +9,7 @@ import ConsultationList from "./pages/ConsultationList";
 import ConsultationDetail from "./pages/ConsultationDetail";
 import CreateConsultation from "./pages/CreateConsultation";
 import CreateProposal from "./pages/CreateProposal";
+import EditProposal from "./pages/EditProposal";
 import TrainerProfile from "./pages/TrainerProfile";
 import Admin from "./pages/Admin";
 
@@ -20,7 +21,8 @@ function Router() {
       <Route path="/consultations" component={ConsultationList} />
       <Route path="/consultations/:id" component={ConsultationDetail} />
       <Route path="/create-consultation" component={CreateConsultation} />
-      <Route path="/create-proposal/:consultationId" component={CreateProposal} />
+      <Route path="/consultations/:consultationId/propose" component={CreateProposal} />
+      <Route path="/proposals/:proposalId/edit" component={EditProposal} />
       <Route path="/trainer-profile" component={TrainerProfile} />
       <Route path="/admin" component={Admin} />
       <Route path={"/404"} component={NotFound} />

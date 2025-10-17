@@ -1,0 +1,1 @@
+ALTER TABLE `proposals` MODIFY COLUMN `program` text;

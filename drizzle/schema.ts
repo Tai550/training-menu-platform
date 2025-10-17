@@ -70,7 +70,7 @@ export const proposals = mysqlTable("proposals", {
   trainerId: varchar("trainerId", { length: 64 }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(), // メニューの詳細説明
-  program: text("program").notNull(), // JSON形式のトレーニングプログラム
+  program: text("program"), // JSON形式のトレーニングプログラム
   duration: varchar("duration", { length: 100 }), // 期間（例：4週間）
   frequency: varchar("frequency", { length: 100 }), // 頻度（例：週3回）
   isBestAnswer: boolean("isBestAnswer").default(false).notNull(),
