@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, consultations, proposals, trainerProfiles, InsertConsultation, InsertProposal, InsertTrainerProfile } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -85,4 +85,78 @@ export async function getUser(id: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Consultation queries
+export async function createConsultation(data: InsertConsultation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(consultations).values(data);
+}
+
+export async function getConsultations(status?: "open" | "answered" | "closed") {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (status) {
+    return await db.select().from(consultations).where(eq(consultations.status, status)).orderBy(consultations.createdAt);
+  }
+  return await db.select().from(consultations).orderBy(consultations.createdAt);
+}
+
+export async function getConsultationById(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(consultations).where(eq(consultations.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateConsultation(id: string, data: Partial<InsertConsultation>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(consultations).set(data).where(eq(consultations.id, id));
+}
+
+// Proposal queries
+export async function createProposal(data: InsertProposal) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(proposals).values(data);
+}
+
+export async function getProposalsByConsultationId(consultationId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(proposals).where(eq(proposals.consultationId, consultationId)).orderBy(proposals.createdAt);
+}
+
+export async function getProposalById(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateProposal(id: string, data: Partial<InsertProposal>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(proposals).set(data).where(eq(proposals.id, id));
+}
+
+// Trainer Profile queries
+export async function createTrainerProfile(data: InsertTrainerProfile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(trainerProfiles).values(data);
+}
+
+export async function getTrainerProfileByUserId(userId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(trainerProfiles).where(eq(trainerProfiles.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateTrainerProfile(id: string, data: Partial<InsertTrainerProfile>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(trainerProfiles).set(data).where(eq(trainerProfiles.id, id));
+}
