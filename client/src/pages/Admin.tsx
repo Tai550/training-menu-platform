@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,16 +14,149 @@ import {
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+interface ConsultationAdminItemProps {
+  consultation: any;
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+function ConsultationAdminItem({ consultation, expanded, onToggle }: ConsultationAdminItemProps) {
+  const { data: proposals, isLoading } = trpc.proposal.listByConsultation.useQuery(
+    { consultationId: consultation.id },
+    { enabled: expanded }
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <CardTitle className="text-lg">{consultation.title}</CardTitle>
+            <CardDescription className="mt-2">
+              投稿者: {consultation.userName} | 
+              投稿日: {new Date(consultation.createdAt).toLocaleDateString('ja-JP')}
+            </CardDescription>
+            <div className="flex gap-2 mt-2">
+              <Badge variant={consultation.isClosed ? "secondary" : "default"}>
+                {consultation.isClosed ? "解決済み" : "募集中"}
+              </Badge>
+              {consultation.category && (
+                <Badge variant="outline">{consultation.category}</Badge>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggle}
+          >
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+      </CardHeader>
+      {expanded && (
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold mb-2">相談内容</h4>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap">{consultation.content}</p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-2">投稿されたプログラム ({proposals?.length || 0}件)</h4>
+              {isLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : proposals && proposals.length > 0 ? (
+                <div className="space-y-4">
+                  {proposals.map((proposal: any) => {
+                    const program = proposal.program ? JSON.parse(proposal.program) : null;
+                    return (
+                      <Card key={proposal.id} className={proposal.isBestAnswer ? "border-2 border-primary" : ""}>
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-base flex items-center gap-2">
+                                {proposal.title}
+                                {proposal.isBestAnswer && (
+                                  <Badge variant="default">ベストアンサー</Badge>
+                                )}
+                              </CardTitle>
+                              <CardDescription>
+                                トレーナー: {proposal.trainerName}
+                                {proposal.duration && ` | 期間: ${proposal.duration}`}
+                                {proposal.frequency && ` | 頻度: ${proposal.frequency}`}
+                              </CardDescription>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div>
+                              <h5 className="font-semibold text-sm mb-1">提案内容</h5>
+                              <p className="text-sm text-gray-600 whitespace-pre-wrap">{proposal.content}</p>
+                            </div>
+                            
+                            {program && program.length > 0 && (
+                              <div>
+                                <h5 className="font-semibold text-sm mb-2">トレーニングプログラム</h5>
+                                <div className="space-y-2">
+                                  {program.map((day: any, idx: number) => (
+                                    <div key={idx} className="border rounded p-3 bg-gray-50">
+                                      <h6 className="font-semibold text-sm mb-2">Day {day.day}</h6>
+                                      <ul className="space-y-1 text-sm">
+                                        {day.exercises.map((ex: any, exIdx: number) => (
+                                          <li key={exIdx} className="flex items-start gap-2">
+                                            <span className="text-gray-400">•</span>
+                                            <span>
+                                              {ex.name}
+                                              {ex.sets && ` - ${ex.sets}セット`}
+                                              {ex.reps && ` × ${ex.reps}回`}
+                                              {ex.duration && ` (${ex.duration})`}
+                                              {ex.notes && ` - ${ex.notes}`}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">まだプログラムが投稿されていません</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
 
 export default function Admin() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const [expandedConsultation, setExpandedConsultation] = useState<string | null>(null);
 
   const { data: users, isLoading } = trpc.admin.getAllUsers.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "admin",
+  });
+
+  const { data: consultations, isLoading: consultationsLoading } = trpc.consultation.list.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === "admin",
   });
 
@@ -235,6 +369,38 @@ export default function Admin() {
               </Table>
             ) : (
               <p className="text-center text-gray-500 py-8">ユーザーがいません</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 相談一覧セクション */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>相談一覧</CardTitle>
+            <CardDescription>
+              すべての相談と投稿されたプログラムを確認できます
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {consultationsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : consultations && consultations.length > 0 ? (
+              <div className="space-y-4">
+                {consultations.map((consultation) => (
+                  <ConsultationAdminItem
+                    key={consultation.id}
+                    consultation={consultation}
+                    expanded={expandedConsultation === consultation.id}
+                    onToggle={() => setExpandedConsultation(
+                      expandedConsultation === consultation.id ? null : consultation.id
+                    )}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500 py-8">相談がありません</p>
             )}
           </CardContent>
         </Card>
