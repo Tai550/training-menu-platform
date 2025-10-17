@@ -177,6 +177,19 @@ export const appRouter = router({
         await db.updateUser(input.userId, { isApprovedTrainer: false });
         return { success: true };
       }),
+    
+    changeUserType: protectedProcedure
+      .input(z.object({ 
+        userId: z.string(),
+        userType: z.enum(["customer", "trainer"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        await db.updateUser(input.userId, { userType: input.userType });
+        return { success: true };
+      }),
   }),
   
   // Trainer Profile router
@@ -185,6 +198,15 @@ export const appRouter = router({
       .input(z.object({ userId: z.string() }))
       .query(async ({ input }) => {
         return await db.getTrainerProfileByUserId(input.userId);
+      }),
+    
+    updateUserType: protectedProcedure
+      .input(z.object({
+        userType: z.enum(["customer", "trainer"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUser(ctx.user.id, { userType: input.userType });
+        return { success: true };
       }),
     
     createOrUpdateProfile: protectedProcedure

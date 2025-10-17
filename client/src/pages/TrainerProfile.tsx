@@ -9,7 +9,9 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, Upload, Twitter, Instagram, Facebook, Youtube, Globe } from "lucide-react";
+import { Plus, Trash2, Loader2, Upload, Twitter, Instagram, Facebook, Youtube, Globe, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
 interface Certification {
@@ -36,6 +38,7 @@ export default function TrainerProfile() {
     { enabled: !!user?.id }
   );
   
+  const [isTrainer, setIsTrainer] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [bio, setBio] = useState("");
@@ -45,6 +48,12 @@ export default function TrainerProfile() {
     { name: "", issuer: "", year: "" }
   ]);
   const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
+
+  useEffect(() => {
+    if (user) {
+      setIsTrainer(user.userType === "trainer");
+    }
+  }, [user]);
 
   useEffect(() => {
     if (profile) {
@@ -64,9 +73,16 @@ export default function TrainerProfile() {
     onSuccess: () => {
       toast.success("プロフィールを保存しました");
       utils.trainer.getProfile.invalidate({ userId: user?.id || "" });
+      utils.auth.me.invalidate();
     },
     onError: (error) => {
       toast.error("エラーが発生しました: " + error.message);
+    },
+  });
+
+  const updateUserTypeMutation = trpc.trainer.updateUserType.useMutation({
+    onSuccess: () => {
+      utils.auth.me.invalidate();
     },
   });
 
@@ -144,6 +160,15 @@ export default function TrainerProfile() {
     setSocialLinks({ ...socialLinks, [platform]: value });
   };
 
+  const handleTrainerToggle = (checked: boolean) => {
+    setIsTrainer(checked);
+    if (checked && user?.userType !== "trainer") {
+      updateUserTypeMutation.mutate({ userType: "trainer" });
+    } else if (!checked && user?.userType === "trainer") {
+      updateUserTypeMutation.mutate({ userType: "customer" });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -217,6 +242,42 @@ export default function TrainerProfile() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Trainer Registration Toggle */}
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="isTrainer"
+                      checked={isTrainer}
+                      onCheckedChange={handleTrainerToggle}
+                      disabled={updateUserTypeMutation.isPending}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="isTrainer" className="text-base font-semibold cursor-pointer">
+                        トレーナーとして登録する
+                      </Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        トレーナーとして登録すると、管理者の承認後に相談への回答が可能になります。
+                      </p>
+                    </div>
+                  </div>
+                  {isTrainer && !user?.isApprovedTrainer && (
+                    <Alert className="mt-3">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        トレーナー承認待ちです。管理者による承認が完了すると、相談への回答が可能になります。
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {isTrainer && user?.isApprovedTrainer && (
+                    <Alert className="mt-3 border-green-200 bg-green-50">
+                      <AlertCircle className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        トレーナーとして承認されています。相談への回答が可能です。
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
                 {/* Profile Photo */}
                 <div>
                   <Label>プロフィール写真</Label>

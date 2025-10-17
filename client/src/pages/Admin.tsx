@@ -46,6 +46,16 @@ export default function Admin() {
     },
   });
 
+  const changeUserTypeMutation = trpc.admin.changeUserType.useMutation({
+    onSuccess: () => {
+      toast.success("ユーザータイプを変更しました");
+      utils.admin.getAllUsers.invalidate();
+    },
+    onError: (error) => {
+      toast.error("エラーが発生しました: " + error.message);
+    },
+  });
+
   const handleApprove = (userId: string) => {
     if (confirm("このユーザーをトレーナーとして承認しますか?")) {
       approveMutation.mutate({ userId });
@@ -55,6 +65,15 @@ export default function Admin() {
   const handleRevoke = (userId: string) => {
     if (confirm("このユーザーのトレーナー承認を取り消しますか?")) {
       revokeMutation.mutate({ userId });
+    }
+  };
+
+  const handleChangeUserType = (userId: string, newType: "customer" | "trainer") => {
+    const message = newType === "trainer" 
+      ? "このユーザーをトレーナーに変更しますか?"
+      : "このユーザーを一般顧客に変更しますか?";
+    if (confirm(message)) {
+      changeUserTypeMutation.mutate({ userId, userType: newType });
     }
   };
 
@@ -164,28 +183,51 @@ export default function Admin() {
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString('ja-JP') : "-"}
                       </TableCell>
                       <TableCell>
-                        {u.userType === "trainer" && u.role !== "admin" && (
-                          <>
-                            {u.isApprovedTrainer ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRevoke(u.id)}
-                                disabled={revokeMutation.isPending}
-                              >
-                                承認取消
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => handleApprove(u.id)}
-                                disabled={approveMutation.isPending}
-                              >
-                                承認
-                              </Button>
-                            )}
-                          </>
-                        )}
+                        <div className="flex gap-2">
+                          {u.role !== "admin" && (
+                            <>
+                              {u.userType === "customer" ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleChangeUserType(u.id, "trainer")}
+                                  disabled={changeUserTypeMutation.isPending}
+                                >
+                                  トレーナーに変更
+                                </Button>
+                              ) : (
+                                <>
+                                  {u.isApprovedTrainer ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleRevoke(u.id)}
+                                      disabled={revokeMutation.isPending}
+                                    >
+                                      承認取消
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleApprove(u.id)}
+                                      disabled={approveMutation.isPending}
+                                    >
+                                      承認
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleChangeUserType(u.id, "customer")}
+                                    disabled={changeUserTypeMutation.isPending}
+                                  >
+                                    顧客に戻す
+                                  </Button>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
