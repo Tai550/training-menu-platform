@@ -243,6 +243,12 @@ export const appRouter = router({
         await db.updateUser(input.userId, { userType: input.userType });
         return { success: true };
       }),
+    
+    getUserById: publicProcedure
+      .input(z.object({ userId: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getUser(input.userId);
+      }),
   }),
   
   // Trainer Profile router

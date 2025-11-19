@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useParams, useLocation, Link } from "wouter";
-import { Loader2, Award } from "lucide-react";
+import { Loader2, Award, User } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ConsultationDetail() {
@@ -140,6 +140,31 @@ export default function ConsultationDetail() {
               return (
                 <Card key={proposal.id} className={proposal.isBestAnswer ? "border-2 border-primary" : ""}>
                   <CardHeader>
+                    {/* トレーナー情報 */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <Link href={`/trainer/${proposal.trainerId}`}>
+                        <div className="cursor-pointer">
+                          {proposal.trainerPhotoUrl ? (
+                            <img
+                              src={proposal.trainerPhotoUrl}
+                              alt={proposal.trainerName}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 hover:border-primary transition-colors"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-200 hover:border-primary transition-colors">
+                              <User className="w-6 h-6 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                      <div className="flex-1">
+                        <Link href={`/trainer/${proposal.trainerId}`}>
+                          <p className="font-semibold text-gray-900 hover:text-primary cursor-pointer">{proposal.trainerName}</p>
+                        </Link>
+                        <p className="text-sm text-gray-500">認定トレーナー</p>
+                      </div>
+                    </div>
+                    
                     <div className="flex justify-between items-start">
                       <CardTitle className="flex items-center gap-2">
                         {proposal.title}

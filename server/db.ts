@@ -166,7 +166,29 @@ export async function updateProposal(id: string, data: Partial<InsertProposal>) 
 export async function getProposalsByConsultationId(consultationId: string) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(proposals).where(eq(proposals.consultationId, consultationId)).orderBy(proposals.createdAt);
+  
+  const results = await db
+    .select({
+      id: proposals.id,
+      consultationId: proposals.consultationId,
+      trainerId: proposals.trainerId,
+      title: proposals.title,
+      content: proposals.content,
+      duration: proposals.duration,
+      frequency: proposals.frequency,
+      program: proposals.program,
+      isBestAnswer: proposals.isBestAnswer,
+      createdAt: proposals.createdAt,
+      trainerName: users.name,
+      trainerPhotoUrl: trainerProfiles.photoUrl,
+    })
+    .from(proposals)
+    .leftJoin(users, eq(proposals.trainerId, users.id))
+    .leftJoin(trainerProfiles, eq(proposals.trainerId, trainerProfiles.userId))
+    .where(eq(proposals.consultationId, consultationId))
+    .orderBy(proposals.createdAt);
+  
+  return results;
 }
 
 export async function getProposalById(id: string) {

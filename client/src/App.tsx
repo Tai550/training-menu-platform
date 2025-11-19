@@ -11,6 +11,7 @@ import CreateConsultation from "./pages/CreateConsultation";
 import CreateProposal from "./pages/CreateProposal";
 import EditProposal from "./pages/EditProposal";
 import TrainerProfile from "./pages/TrainerProfile";
+import TrainerPublicProfile from "./pages/TrainerPublicProfile";
 import Admin from "./pages/Admin";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/consultations/:consultationId/propose" component={CreateProposal} />
       <Route path="/proposals/:proposalId/edit" component={EditProposal} />
       <Route path="/trainer-profile" component={TrainerProfile} />
+      <Route path="/trainer/:id" component={TrainerPublicProfile} />
       <Route path="/admin" component={Admin} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
