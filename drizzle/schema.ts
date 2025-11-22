@@ -21,6 +21,25 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
+ * 一般ユーザープロフィール情報
+ */
+export const userProfiles = mysqlTable("userProfiles", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  profilePhoto: text("profilePhoto"), // S3 URL for profile photo
+  bio: text("bio"),
+  height: int("height"), // 身長（cm）
+  weight: int("weight"), // 体重（kg）
+  age: int("age"), // 年齢
+  gender: mysqlEnum("gender", ["male", "female", "other"]),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = typeof userProfiles.$inferInsert;
+
+/**
  * トレーナープロフィール情報
  */
 export const trainerProfiles = mysqlTable("trainerProfiles", {

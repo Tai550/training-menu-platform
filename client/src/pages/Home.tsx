@@ -35,7 +35,7 @@ export default function Home() {
             <Link href="/">
               <div className="flex items-center gap-2">
                 <img src="/logo.png" alt="Logo" className="h-10 w-10" />
-                <h1 className="text-lg font-bold text-[#1e3a5f]">{APP_TITLE || "トレーニングメニュー作成掲示板"}</h1>
+                <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">{APP_TITLE || "トレーニングメニュー作成掲示板"}</h1>
               </div>
             </Link>
             <div className="flex items-center gap-3">
@@ -44,7 +44,7 @@ export default function Home() {
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                   </Button>
-                  <Link href="/trainer-profile">
+                  <Link href={user?.userType === "trainer" ? "/trainer-profile" : "/profile"}>
                     <Button variant="ghost" size="icon">
                       <User className="h-5 w-5" />
                     </Button>
@@ -72,7 +72,7 @@ export default function Home() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1"
             />
-            <Button type="submit" size="icon" className="bg-[#1e3a5f] hover:bg-[#2d5380]">
+            <Button type="submit" size="icon">
               <Search className="h-5 w-5" />
             </Button>
           </form>
@@ -82,20 +82,20 @@ export default function Home() {
       {/* メインコンテンツ */}
       <main className="container mx-auto px-4 py-6">
         {/* CTA セクション */}
-        <Card className="bg-gradient-to-r from-[#1e3a5f] to-[#2d5380] text-white p-6 mb-6">
+        <Card className="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6 mb-6 border-0 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <h2 className="text-lg font-bold mb-2">
                 身近な疑問や悩みを<br />質問してみませんか？
               </h2>
               <Link href="/create-consultation">
-                <Button className="bg-white text-[#1e3a5f] hover:bg-gray-100 font-bold">
+                <Button className="bg-white text-blue-600 hover:bg-gray-100 font-bold">
                   質問してみる
                 </Button>
               </Link>
             </div>
             <div className="hidden sm:block">
-              <MessageCircle className="h-20 w-20 opacity-50" />
+              <MessageCircle className="h-20 w-20 opacity-30" />
             </div>
           </div>
         </Card>
@@ -103,7 +103,7 @@ export default function Home() {
         {/* タブ風セクション */}
         <div className="mb-6">
           <div className="flex border-b">
-            <button className="px-4 py-3 font-bold text-[#1e3a5f] border-b-2 border-[#1e3a5f]">
+            <button className="px-4 py-3 font-bold text-blue-600 border-b-2 border-blue-600">
               回答募集中
             </button>
             <Link href="/consultations">

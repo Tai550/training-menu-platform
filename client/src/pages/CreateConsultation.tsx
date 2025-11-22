@@ -10,19 +10,26 @@ import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, User } from "lucide-react";
 
 export default function CreateConsultation() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-  
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [goals, setGoals] = useState("");
   const [currentLevel, setCurrentLevel] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [amount, setAmount] = useState("");
+
+  const { data: profile } = trpc.userProfile.getProfile.useQuery(
+    { userId: user?.id ?? "" },
+    { enabled: !!user?.id }
+  );
 
   const createMutation = trpc.consultation.create.useMutation({
     onSuccess: (data) => {
@@ -43,6 +50,16 @@ export default function CreateConsultation() {
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleLoadFromProfile = () => {
+    if (profile) {
+      if (profile.height) setHeight(profile.height.toString());
+      if (profile.weight) setWeight(profile.weight.toString());
+      toast.success("プロフィール情報を読み込みました");
+    } else {
+      toast.error("プロフィール情報が見つかりません");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -139,6 +156,44 @@ export default function CreateConsultation() {
                   placeholder="例: 運動初心者、週1回ジムに通っている など"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="height">身長 (cm)</Label>
+                  <Input
+                    id="height"
+                    type="number"
+                    value={height}
+                    onChange={(e) => setHeight(e.target.value)}
+                    placeholder="170"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="weight">体重 (kg)</Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    placeholder="65"
+                  />
+                </div>
+              </div>
+
+              {profile && (profile.height || profile.weight) && (
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoadFromProfile}
+                    className="flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    プロフィールから入力
+                  </Button>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="tags">タグ</Label>

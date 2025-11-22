@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, consultations, proposals, trainerProfiles, InsertConsultation, InsertProposal, InsertTrainerProfile } from "../drizzle/schema";
+import { InsertUser, users, consultations, proposals, trainerProfiles, userProfiles, InsertConsultation, InsertProposal, InsertTrainerProfile, InsertUserProfile } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -216,4 +216,24 @@ export async function updateTrainerProfile(id: string, data: Partial<InsertTrain
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(trainerProfiles).set(data).where(eq(trainerProfiles.id, id));
+}
+
+// User Profile queries
+export async function createUserProfile(data: InsertUserProfile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(userProfiles).values(data);
+}
+
+export async function getUserProfileByUserId(userId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserProfile(id: string, data: Partial<InsertUserProfile>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(userProfiles).set(data).where(eq(userProfiles.id, id));
 }

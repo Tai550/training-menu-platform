@@ -187,15 +187,18 @@ export const appRouter = router({
   }),
   
   // Storage router
-  storage: router({    uploadProfilePhoto: protectedProcedure
+  storage: router({
+    uploadProfilePhoto: protectedProcedure
       .input(z.object({
         fileName: z.string(),
         fileData: z.string(), // base64 encoded
         mimeType: z.string(),
+        userType: z.enum(["customer", "trainer"]).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const buffer = Buffer.from(input.fileData, 'base64');
-        const filename = `trainer-photos/${ctx.user.id}-${Date.now()}.${input.fileName.split('.').pop()}`;
+        const folder = input.userType === "trainer" ? "trainer-photos" : "user-photos";
+        const filename = `${folder}/${ctx.user.id}-${Date.now()}.${input.fileName.split('.').pop()}`;
         const result = await storagePut(filename, buffer, input.mimeType);
         return result;
       }),
@@ -251,6 +254,53 @@ export const appRouter = router({
       }),
   }),
   
+  // User Profile router
+  userProfile: router({
+    getProfile: publicProcedure
+      .input(z.object({ userId: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getUserProfileByUserId(input.userId);
+      }),
+
+    createOrUpdateProfile: protectedProcedure
+      .input(z.object({
+        profilePhoto: z.string().optional(),
+        bio: z.string().optional(),
+        height: z.number().optional(),
+        weight: z.number().optional(),
+        age: z.number().optional(),
+        gender: z.enum(["male", "female", "other"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const existing = await db.getUserProfileByUserId(ctx.user.id);
+
+        if (existing) {
+          await db.updateUserProfile(existing.id, {
+            profilePhoto: input.profilePhoto,
+            bio: input.bio,
+            height: input.height,
+            weight: input.weight,
+            age: input.age,
+            gender: input.gender,
+          });
+          return { id: existing.id };
+        } else {
+          const id = nanoid();
+          await db.createUserProfile({
+            id,
+            userId: ctx.user.id,
+            profilePhoto: input.profilePhoto || null,
+            bio: input.bio || null,
+            height: input.height || null,
+            weight: input.weight || null,
+            age: input.age || null,
+            gender: input.gender || null,
+          });
+          return { id };
+        }
+      }),
+  }),
+
   // Trainer Profile router
   trainer: router({
     getProfile: publicProcedure
