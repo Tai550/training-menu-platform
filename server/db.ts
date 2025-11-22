@@ -113,17 +113,64 @@ export async function createConsultation(data: InsertConsultation) {
 export async function getConsultations(status?: "open" | "answered" | "closed") {
   const db = await getDb();
   if (!db) return [];
-  
+
+  const query = db
+    .select({
+      id: consultations.id,
+      userId: consultations.userId,
+      title: consultations.title,
+      description: consultations.description,
+      goals: consultations.goals,
+      currentLevel: consultations.currentLevel,
+      tags: consultations.tags,
+      status: consultations.status,
+      isPaid: consultations.isPaid,
+      amount: consultations.amount,
+      bestAnswerId: consultations.bestAnswerId,
+      createdAt: consultations.createdAt,
+      updatedAt: consultations.updatedAt,
+      userName: users.name,
+      userPhoto: userProfiles.profilePhoto,
+    })
+    .from(consultations)
+    .leftJoin(users, eq(consultations.userId, users.id))
+    .leftJoin(userProfiles, eq(consultations.userId, userProfiles.userId))
+    .orderBy(consultations.createdAt);
+
   if (status) {
-    return await db.select().from(consultations).where(eq(consultations.status, status)).orderBy(consultations.createdAt);
+    return await query.where(eq(consultations.status, status));
   }
-  return await db.select().from(consultations).orderBy(consultations.createdAt);
+  return await query;
 }
 
 export async function getConsultationById(id: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(consultations).where(eq(consultations.id, id)).limit(1);
+
+  const result = await db
+    .select({
+      id: consultations.id,
+      userId: consultations.userId,
+      title: consultations.title,
+      description: consultations.description,
+      goals: consultations.goals,
+      currentLevel: consultations.currentLevel,
+      tags: consultations.tags,
+      status: consultations.status,
+      isPaid: consultations.isPaid,
+      amount: consultations.amount,
+      bestAnswerId: consultations.bestAnswerId,
+      createdAt: consultations.createdAt,
+      updatedAt: consultations.updatedAt,
+      userName: users.name,
+      userPhoto: userProfiles.profilePhoto,
+    })
+    .from(consultations)
+    .leftJoin(users, eq(consultations.userId, users.id))
+    .leftJoin(userProfiles, eq(consultations.userId, userProfiles.userId))
+    .where(eq(consultations.id, id))
+    .limit(1);
+
   return result.length > 0 ? result[0] : undefined;
 }
 

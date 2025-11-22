@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 
 export default function ConsultationList() {
   const { user, isAuthenticated } = useAuth();
@@ -37,6 +37,22 @@ export default function ConsultationList() {
                 <Link key={consultation.id} href={`/consultations/${consultation.id}`}>
                   <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
                     <CardHeader>
+                      {/* 質問者情報 */}
+                      <div className="flex items-center gap-2 mb-3">
+                        {consultation.userPhoto ? (
+                          <img
+                            src={consultation.userPhoto}
+                            alt={consultation.userName || "ユーザー"}
+                            className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border border-gray-200">
+                            <User className="h-4 w-4 text-gray-500" />
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-700">{consultation.userName || "匿名ユーザー"}</span>
+                      </div>
+
                       <div className="flex justify-between items-start mb-2">
                         <Badge variant={
                           consultation.status === "open" ? "default" :

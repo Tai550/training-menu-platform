@@ -63,24 +63,42 @@ export default function ConsultationDetail() {
         {/* Consultation Details */}
         <Card className="mb-8">
           <CardHeader>
-            <div className="flex justify-between items-start mb-4">
-              <Badge variant={
-                consultation.status === "open" ? "default" :
-                consultation.status === "answered" ? "secondary" : "outline"
-              }>
-                {consultation.status === "open" ? "募集中" :
-                 consultation.status === "answered" ? "回答済み" : "終了"}
-              </Badge>
-              {(consultation.amount ?? 0) > 0 && (
-                <span className="text-lg font-semibold text-primary">
-                  ¥{(consultation.amount ?? 0).toLocaleString()}
-                </span>
+            {/* 質問者情報 */}
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b">
+              {consultation.userPhoto ? (
+                <img
+                  src={consultation.userPhoto}
+                  alt={consultation.userName || "ユーザー"}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-200">
+                  <User className="w-6 h-6 text-gray-500" />
+                </div>
               )}
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">{consultation.userName || "匿名ユーザー"}</p>
+                <p className="text-sm text-gray-500">
+                  投稿日: {new Date(consultation.createdAt!).toLocaleDateString('ja-JP')}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant={
+                  consultation.status === "open" ? "default" :
+                  consultation.status === "answered" ? "secondary" : "outline"
+                }>
+                  {consultation.status === "open" ? "募集中" :
+                   consultation.status === "answered" ? "回答済み" : "終了"}
+                </Badge>
+                {(consultation.amount ?? 0) > 0 && (
+                  <span className="text-lg font-semibold text-primary">
+                    ¥{(consultation.amount ?? 0).toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
+
             <CardTitle className="text-3xl">{consultation.title}</CardTitle>
-            <CardDescription>
-              投稿日: {new Date(consultation.createdAt!).toLocaleDateString('ja-JP')}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

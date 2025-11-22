@@ -126,19 +126,24 @@ export default function Home() {
                   <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-1">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-500" />
-                        </div>
+                        {consultation.userPhoto ? (
+                          <img
+                            src={consultation.userPhoto}
+                            alt={consultation.userName || "ユーザー"}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-200">
+                            <User className="h-5 w-5 text-gray-500" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">
-                          {consultation.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {consultation.description}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            {consultation.userName || "匿名ユーザー"}
+                          </span>
+                          <span className="text-xs text-gray-500">
                             {consultation.createdAt && new Date(consultation.createdAt).toLocaleDateString('ja-JP', {
                               month: 'numeric',
                               day: 'numeric',
@@ -147,6 +152,12 @@ export default function Home() {
                             })}
                           </span>
                         </div>
+                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">
+                          {consultation.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {consultation.description}
+                        </p>
                       </div>
                     </div>
                   </Card>
