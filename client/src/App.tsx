@@ -14,6 +14,9 @@ import UserProfile from "./pages/UserProfile";
 import TrainerProfile from "./pages/TrainerProfile";
 import TrainerPublicProfile from "./pages/TrainerPublicProfile";
 import Admin from "./pages/Admin";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Notifications from "./pages/Notifications";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -29,6 +32,9 @@ function Router() {
       <Route path="/trainer-profile" component={TrainerProfile} />
       <Route path="/trainer/:id" component={TrainerPublicProfile} />
       <Route path="/admin" component={Admin} />
+      <Route path="/notifications" component={Notifications} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

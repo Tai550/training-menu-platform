@@ -43,6 +43,13 @@
       "when": 1763777631870,
       "tag": "0005_typical_naoko",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1763781751900,
+      "tag": "0006_tired_the_fallen",
+      "breakpoints": true
     }
   ]
 }

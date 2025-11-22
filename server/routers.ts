@@ -76,11 +76,25 @@ export const appRouter = router({
           bestAnswerId: input.proposalId,
           status: "answered",
         });
-        
+
         await db.updateProposal(input.proposalId, {
           isBestAnswer: true,
         });
-        
+
+        // Create notification for trainer who got best answer
+        const proposal = await db.getProposalById(input.proposalId);
+        if (proposal && proposal.trainerId !== ctx.user.id) {
+          await db.createNotification({
+            id: nanoid(),
+            userId: proposal.trainerId,
+            type: "best_answer",
+            title: "ベストアンサーに選ばれました！",
+            message: `あなたの提案が「${consultation.title}」のベストアンサーに選ばれました。`,
+            relatedId: input.consultationId,
+            isRead: false,
+          });
+        }
+
         return { success: true };
       }),
   }),
@@ -181,7 +195,21 @@ export const appRouter = router({
           program: input.program ? JSON.stringify(input.program) : null,
           isBestAnswer: false,
         });
-        
+
+        // Create notification for consultation owner
+        const consultation = await db.getConsultationById(input.consultationId);
+        if (consultation && consultation.userId !== ctx.user.id) {
+          await db.createNotification({
+            id: nanoid(),
+            userId: consultation.userId,
+            type: "new_proposal",
+            title: "新しい提案が届きました",
+            message: `「${consultation.title}」に新しいトレーニングメニュー提案が投稿されました。`,
+            relatedId: consultation.id,
+            isRead: false,
+          });
+        }
+
         return { id };
       }),
   }),
@@ -393,6 +421,32 @@ export const appRouter = router({
           });
           return { id };
         }
+      }),
+  }),
+
+  // Notification router
+  notification: router({
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getNotificationsByUserId(ctx.user.id);
+      }),
+
+    unreadCount: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getUnreadNotificationCount(ctx.user.id);
+      }),
+
+    markAsRead: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.markNotificationAsRead(input.id);
+        return { success: true };
+      }),
+
+    markAllAsRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await db.markAllNotificationsAsRead(ctx.user.id);
+        return { success: true };
       }),
   }),
 });

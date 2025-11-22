@@ -1,6 +1,6 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, consultations, proposals, trainerProfiles, userProfiles, InsertConsultation, InsertProposal, InsertTrainerProfile, InsertUserProfile } from "../drizzle/schema";
+import { InsertUser, users, consultations, proposals, trainerProfiles, userProfiles, notifications, InsertConsultation, InsertProposal, InsertTrainerProfile, InsertUserProfile, InsertNotification } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -295,4 +295,48 @@ export async function updateUserProfile(id: string, data: Partial<InsertUserProf
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(userProfiles).set(data).where(eq(userProfiles.id, id));
+}
+
+// Notification queries
+export async function createNotification(data: InsertNotification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(notifications).values(data);
+}
+
+export async function getNotificationsByUserId(userId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt));
+}
+
+export async function getUnreadNotificationCount(userId: string) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db
+    .select()
+    .from(notifications)
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.isRead, false)
+    ));
+  return result.length;
+}
+
+export async function markNotificationAsRead(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+}
+
+export async function markAllNotificationsAsRead(userId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(notifications)
+    .set({ isRead: true })
+    .where(eq(notifications.userId, userId));
 }

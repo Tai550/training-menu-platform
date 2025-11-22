@@ -15,6 +15,10 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: consultations, isLoading } = trpc.consultation.list.useQuery();
+  const { data: unreadCount } = trpc.notification.unreadCount.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +45,16 @@ export default function Home() {
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
                 <>
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                  </Button>
+                  <Link href="/notifications">
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      {unreadCount && unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
                   <Link href={user?.userType === "trainer" ? "/trainer-profile" : "/profile"}>
                     <Button variant="ghost" size="icon">
                       <User className="h-5 w-5" />
@@ -187,8 +198,22 @@ export default function Home() {
 
       {/* フッター */}
       <footer className="bg-gray-900 text-white py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm">&copy; 2025 {APP_TITLE || "トレーニングメニュー作成掲示板"}. All rights reserved.</p>
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm">&copy; 2025 {APP_TITLE || "トレーニングメニュー作成掲示板"}. All rights reserved.</p>
+            <div className="flex gap-6">
+              <Link href="/terms">
+                <a className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">
+                  利用規約
+                </a>
+              </Link>
+              <Link href="/privacy">
+                <a className="text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">
+                  プライバシーポリシー
+                </a>
+              </Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

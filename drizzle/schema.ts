@@ -99,3 +99,20 @@ export const proposals = mysqlTable("proposals", {
 
 export type Proposal = typeof proposals.$inferSelect;
 export type InsertProposal = typeof proposals.$inferInsert;
+
+/**
+ * 通知
+ */
+export const notifications = mysqlTable("notifications", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(), // 通知を受け取るユーザー
+  type: mysqlEnum("type", ["new_proposal", "best_answer", "consultation_deleted"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  relatedId: varchar("relatedId", { length: 64 }), // 関連する相談IDまたは提案ID
+  isRead: boolean("isRead").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
