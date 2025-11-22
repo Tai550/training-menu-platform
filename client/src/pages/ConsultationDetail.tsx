@@ -141,9 +141,9 @@ export default function ConsultationDetail() {
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">トレーニングメニュー提案</h2>
           {isAuthenticated && !isOwner && consultation.status === "open" && user?.isApprovedTrainer && (
-            <Link href={`/consultations/${id}/propose`}>
-              <Button>メニューを提案する</Button>
-            </Link>
+            <Button onClick={() => setLocation(`/consultations/${id}/propose`)}>
+              メニューを提案する
+            </Button>
           )}
         </div>
 
@@ -278,10 +278,10 @@ export default function ConsultationDetail() {
           <Card className="text-center py-12">
             <CardContent>
               <p className="text-gray-600 mb-4">まだメニュー提案がありません</p>
-              {isAuthenticated && !isOwner && (
-                <Link href={`/consultations/${id}/propose`}>
-                  <Button>最初のメニューを提案する</Button>
-                </Link>
+              {isAuthenticated && !isOwner && user?.isApprovedTrainer && (
+                <Button onClick={() => setLocation(`/consultations/${id}/propose`)}>
+                  最初のメニューを提案する
+                </Button>
               )}
             </CardContent>
           </Card>
