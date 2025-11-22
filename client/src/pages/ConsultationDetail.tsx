@@ -123,7 +123,7 @@ export default function ConsultationDetail() {
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">トレーニングメニュー提案</h2>
           {isAuthenticated && !isOwner && consultation.status === "open" && (
-            <Link href={`/create-proposal/${id}`}>
+            <Link href={`/consultations/${id}/propose`}>
               <Button>メニューを提案する</Button>
             </Link>
           )}
@@ -244,7 +244,7 @@ export default function ConsultationDetail() {
             <CardContent>
               <p className="text-gray-600 mb-4">まだメニュー提案がありません</p>
               {isAuthenticated && !isOwner && (
-                <Link href={`/create-proposal/${id}`}>
+                <Link href={`/consultations/${id}/propose`}>
                   <Button>最初のメニューを提案する</Button>
                 </Link>
               )}
