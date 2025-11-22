@@ -147,7 +147,7 @@ export default function ConsultationDetail() {
                           {proposal.trainerPhotoUrl ? (
                             <img
                               src={proposal.trainerPhotoUrl}
-                              alt={proposal.trainerName}
+                              alt={proposal.trainerName || "トレーナー"}
                               className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 hover:border-primary transition-colors"
                             />
                           ) : (

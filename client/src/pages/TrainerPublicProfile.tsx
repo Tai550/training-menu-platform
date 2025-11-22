@@ -35,6 +35,7 @@ export default function TrainerPublicProfile() {
 
   const specialties = profile.specialties ? JSON.parse(profile.specialties) : [];
   const certifications = profile.certifications ? JSON.parse(profile.certifications) : [];
+  const socialLinks = profile.socialLinks ? JSON.parse(profile.socialLinks) : {};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,9 +46,9 @@ export default function TrainerPublicProfile() {
             <div className="flex items-start gap-6">
               {/* プロフィール写真 */}
               <div className="flex-shrink-0">
-                {profile.photoUrl ? (
+                {profile.profilePhoto ? (
                   <img
-                    src={profile.photoUrl}
+                    src={profile.profilePhoto}
                     alt={user.name || "トレーナー"}
                     className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
                   />
@@ -75,42 +76,42 @@ export default function TrainerPublicProfile() {
                 )}
 
                 {/* SNSリンク */}
-                {(profile.twitterUrl || profile.instagramUrl || profile.facebookUrl || profile.youtubeUrl || profile.websiteUrl) && (
+                {(socialLinks.twitter || socialLinks.instagram || socialLinks.facebook || socialLinks.youtube || socialLinks.website) && (
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {profile.twitterUrl && (
-                      <a href={profile.twitterUrl} target="_blank" rel="noopener noreferrer">
+                    {socialLinks.twitter && (
+                      <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm" className="flex items-center gap-2">
                           <ExternalLink className="w-4 h-4" />
                           Twitter/X
                         </Button>
                       </a>
                     )}
-                    {profile.instagramUrl && (
-                      <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer">
+                    {socialLinks.instagram && (
+                      <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm" className="flex items-center gap-2">
                           <ExternalLink className="w-4 h-4" />
                           Instagram
                         </Button>
                       </a>
                     )}
-                    {profile.facebookUrl && (
-                      <a href={profile.facebookUrl} target="_blank" rel="noopener noreferrer">
+                    {socialLinks.facebook && (
+                      <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm" className="flex items-center gap-2">
                           <ExternalLink className="w-4 h-4" />
                           Facebook
                         </Button>
                       </a>
                     )}
-                    {profile.youtubeUrl && (
-                      <a href={profile.youtubeUrl} target="_blank" rel="noopener noreferrer">
+                    {socialLinks.youtube && (
+                      <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm" className="flex items-center gap-2">
                           <ExternalLink className="w-4 h-4" />
                           YouTube
                         </Button>
                       </a>
                     )}
-                    {profile.websiteUrl && (
-                      <a href={profile.websiteUrl} target="_blank" rel="noopener noreferrer">
+                    {socialLinks.website && (
+                      <a href={socialLinks.website} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm" className="flex items-center gap-2">
                           <ExternalLink className="w-4 h-4" />
                           公式サイト
@@ -153,13 +154,6 @@ export default function TrainerPublicProfile() {
               </div>
             )}
 
-            {/* 経験年数 */}
-            {profile.yearsOfExperience && (
-              <div>
-                <h3 className="font-semibold text-lg mb-3">経験年数</h3>
-                <p className="text-gray-700">{profile.yearsOfExperience}年</p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </main>

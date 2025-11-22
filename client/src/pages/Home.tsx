@@ -120,7 +120,7 @@ export default function Home() {
             <div className="text-center py-8 text-gray-500">読み込み中...</div>
           ) : recentConsultations.length > 0 ? (
             recentConsultations
-              .filter(c => !c.isClosed)
+              .filter(c => c.status === "open")
               .map((consultation) => (
                 <Link key={consultation.id} href={`/consultations/${consultation.id}`}>
                   <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
@@ -131,24 +131,15 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        {consultation.category && (
-                          <Badge variant="outline" className="mb-2">
-                            {consultation.category}
-                          </Badge>
-                        )}
                         <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">
                           {consultation.title}
                         </h3>
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {consultation.content}
+                          {consultation.description}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <MessageCircle className="h-3 w-3" />
-                            {consultation.proposalCount || 0}件の回答
-                          </span>
                           <span>
-                            {new Date(consultation.createdAt).toLocaleDateString('ja-JP', {
+                            {consultation.createdAt && new Date(consultation.createdAt).toLocaleDateString('ja-JP', {
                               month: 'numeric',
                               day: 'numeric',
                               hour: '2-digit',

@@ -180,7 +180,7 @@ export async function getProposalsByConsultationId(consultationId: string) {
       isBestAnswer: proposals.isBestAnswer,
       createdAt: proposals.createdAt,
       trainerName: users.name,
-      trainerPhotoUrl: trainerProfiles.photoUrl,
+      trainerPhotoUrl: trainerProfiles.profilePhoto,
     })
     .from(proposals)
     .leftJoin(users, eq(proposals.trainerId, users.id))
