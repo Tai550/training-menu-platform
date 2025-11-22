@@ -36,6 +36,13 @@
       "when": 1760669933255,
       "tag": "0004_sudden_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1763777631870,
+      "tag": "0005_typical_naoko",
+      "breakpoints": true
     }
   ]
 }
