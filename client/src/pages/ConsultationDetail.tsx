@@ -140,12 +140,29 @@ export default function ConsultationDetail() {
         {/* Proposals Section */}
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">トレーニングメニュー提案</h2>
-          {isAuthenticated && !isOwner && consultation.status === "open" && (
+          {isAuthenticated && !isOwner && consultation.status === "open" && user?.isApprovedTrainer && (
             <Link href={`/consultations/${id}/propose`}>
               <Button>メニューを提案する</Button>
             </Link>
           )}
         </div>
+
+        {/* Show message for non-approved trainers */}
+        {isAuthenticated && !isOwner && consultation.status === "open" && !user?.isApprovedTrainer && (
+          <Card className="mb-6 border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <p className="text-sm text-gray-700">
+                メニューを提案するには、トレーナーとして管理者の承認が必要です。
+                トレーナープロフィールを設定して承認をお待ちください。
+              </p>
+              <Link href="/trainer-profile">
+                <Button variant="outline" size="sm" className="mt-3">
+                  トレーナープロフィールを設定
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
         {proposalsLoading ? (
           <div className="flex justify-center py-8">

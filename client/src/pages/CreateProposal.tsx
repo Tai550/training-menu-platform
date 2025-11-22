@@ -29,8 +29,12 @@ export default function CreateProposal() {
   const { consultationId } = useParams<{ consultationId: string }>();
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-  
+
   const { data: consultation } = trpc.consultation.getById.useQuery({ id: consultationId! });
+  const { data: existingProposal } = trpc.proposal.getByTrainerAndConsultation.useQuery(
+    { consultationId: consultationId! },
+    { enabled: isAuthenticated }
+  );
   
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -135,6 +139,81 @@ export default function CreateProposal() {
             </a>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Check if user is an approved trainer
+  if (user && !user.isApprovedTrainer) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex-1">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>トレーナー承認が必要です</CardTitle>
+              <CardDescription>
+                メニューを提案するには、管理者によるトレーナー承認が必要です
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700">
+                現在、あなたのアカウントはトレーナーとして承認されていません。
+                メニュー提案を行うには、管理者に承認を依頼してください。
+              </p>
+              <div className="flex gap-3">
+                <Link href={`/consultations/${consultationId}`}>
+                  <Button variant="outline">相談ページに戻る</Button>
+                </Link>
+                <Link href="/trainer-profile">
+                  <Button>トレーナープロフィールを設定</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        <footer className="bg-gray-900 text-white py-8 mt-auto">
+          <div className="container mx-auto px-4 text-center">
+            <p>&copy; 2025 {APP_TITLE}. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  // Check if trainer already has a proposal for this consultation
+  if (existingProposal) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex-1">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>既に提案済みです</CardTitle>
+              <CardDescription>
+                この相談にはすでにメニューを提案しています
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700">
+                この相談にはすでにメニューを提案しています。提案を編集したい場合は、相談詳細ページから編集してください。
+              </p>
+              <div className="flex gap-3">
+                <Link href={`/consultations/${consultationId}`}>
+                  <Button>相談ページに戻る</Button>
+                </Link>
+                <Link href={`/proposals/${existingProposal.id}/edit`}>
+                  <Button variant="outline">提案を編集</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        <footer className="bg-gray-900 text-white py-8 mt-auto">
+          <div className="container mx-auto px-4 text-center">
+            <p>&copy; 2025 {APP_TITLE}. All rights reserved.</p>
+          </div>
+        </footer>
       </div>
     );
   }
