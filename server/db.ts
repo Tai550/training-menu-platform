@@ -180,6 +180,12 @@ export async function updateConsultation(id: string, data: Partial<InsertConsult
   await db.update(consultations).set(data).where(eq(consultations.id, id));
 }
 
+export async function deleteConsultation(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(consultations).where(eq(consultations.id, id));
+}
+
 export async function createProposal(proposal: InsertProposal) {
   const db = await getDb();
   if (!db) {
@@ -243,6 +249,12 @@ export async function getProposalById(id: string) {
   if (!db) return undefined;
   const result = await db.select().from(proposals).where(eq(proposals.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function deleteProposal(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(proposals).where(eq(proposals.id, id));
 }
 
 // Trainer Profile queries

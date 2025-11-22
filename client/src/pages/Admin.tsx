@@ -11,10 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { Loader2, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, ChevronDown, ChevronUp, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -23,9 +33,10 @@ interface ConsultationAdminItemProps {
   consultation: any;
   expanded: boolean;
   onToggle: () => void;
+  onDelete: (consultationId: string) => void;
 }
 
-function ConsultationAdminItem({ consultation, expanded, onToggle }: ConsultationAdminItemProps) {
+function ConsultationAdminItem({ consultation, expanded, onToggle, onDelete }: ConsultationAdminItemProps) {
   const { data: proposals, isLoading } = trpc.proposal.listByConsultation.useQuery(
     { consultationId: consultation.id },
     { enabled: expanded }
@@ -50,13 +61,23 @@ function ConsultationAdminItem({ consultation, expanded, onToggle }: Consultatio
               )}
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-          >
-            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete(consultation.id)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              削除
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggle}
+            >
+              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       {expanded && (
@@ -151,6 +172,9 @@ export default function Admin() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const [expandedConsultation, setExpandedConsultation] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
 
   const { data: users, isLoading } = trpc.admin.getAllUsers.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === "admin",
@@ -190,6 +214,27 @@ export default function Admin() {
     },
   });
 
+  const updateUserMutation = trpc.admin.updateUser.useMutation({
+    onSuccess: () => {
+      toast.success("ユーザー情報を更新しました");
+      utils.admin.getAllUsers.invalidate();
+      setEditingUser(null);
+    },
+    onError: (error) => {
+      toast.error("エラーが発生しました: " + error.message);
+    },
+  });
+
+  const deleteConsultationMutation = trpc.admin.deleteConsultation.useMutation({
+    onSuccess: () => {
+      toast.success("相談を削除しました");
+      utils.consultation.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("エラーが発生しました: " + error.message);
+    },
+  });
+
   const handleApprove = (userId: string) => {
     if (confirm("このユーザーをトレーナーとして承認しますか?")) {
       approveMutation.mutate({ userId });
@@ -203,11 +248,32 @@ export default function Admin() {
   };
 
   const handleChangeUserType = (userId: string, newType: "customer" | "trainer") => {
-    const message = newType === "trainer" 
+    const message = newType === "trainer"
       ? "このユーザーをトレーナーに変更しますか?"
       : "このユーザーを一般顧客に変更しますか?";
     if (confirm(message)) {
       changeUserTypeMutation.mutate({ userId, userType: newType });
+    }
+  };
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setEditName(user.name || "");
+    setEditEmail(user.email || "");
+  };
+
+  const handleSaveUser = () => {
+    if (!editingUser) return;
+    updateUserMutation.mutate({
+      userId: editingUser.id,
+      name: editName,
+      email: editEmail,
+    });
+  };
+
+  const handleDeleteConsultation = (consultationId: string) => {
+    if (confirm("この相談を削除しますか？この操作は取り消せません。")) {
+      deleteConsultationMutation.mutate({ consultationId });
     }
   };
 
@@ -317,7 +383,15 @@ export default function Admin() {
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString('ja-JP') : "-"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditUser(u)}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            編集
+                          </Button>
                           {u.role !== "admin" && (
                             <>
                               {u.userType === "customer" ? (
@@ -396,6 +470,7 @@ export default function Admin() {
                     onToggle={() => setExpandedConsultation(
                       expandedConsultation === consultation.id ? null : consultation.id
                     )}
+                    onDelete={handleDeleteConsultation}
                   />
                 ))}
               </div>
@@ -405,6 +480,47 @@ export default function Admin() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ユーザー情報を編集</DialogTitle>
+            <DialogDescription>
+              ユーザーの名前とメールアドレスを編集できます
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="edit-name">名前</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="名前を入力"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-email">メールアドレス</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="メールアドレスを入力"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>
+              キャンセル
+            </Button>
+            <Button onClick={handleSaveUser} disabled={updateUserMutation.isPending}>
+              {updateUserMutation.isPending ? "保存中..." : "保存"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 mt-auto">

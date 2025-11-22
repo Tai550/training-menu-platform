@@ -252,6 +252,37 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getUser(input.userId);
       }),
+
+    updateUser: protectedProcedure
+      .input(z.object({
+        userId: z.string(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        const { userId, ...updateData } = input;
+        await db.updateUser(userId, updateData);
+        return { success: true };
+      }),
+
+    deleteConsultation: protectedProcedure
+      .input(z.object({ consultationId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+        // First delete all proposals for this consultation
+        const proposals = await db.getProposalsByConsultationId(input.consultationId);
+        for (const proposal of proposals) {
+          await db.deleteProposal(proposal.id);
+        }
+        // Then delete the consultation
+        await db.deleteConsultation(input.consultationId);
+        return { success: true };
+      }),
   }),
   
   // User Profile router
